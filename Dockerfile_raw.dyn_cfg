@@ -1,0 +1,7 @@
+:doc_list=>["main"],
+:docs=>{
+	"main"=>{
+    	:cmd=>[:save],
+    	:tag=>["r","ruby","pandoc","dyndoc"]
+	}
+}
