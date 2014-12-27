@@ -1,0 +1,58 @@
+#!/bin/bash
+
+## Rmk: no "~" below since "docker run -v" requires full path 
+dynlib="${HOME}/.dyndoc-library"
+dynproj="${HOME}/.dyndoc-proj"
+
+cmd="$1"
+
+case "$1" in
+start | restart | stop)
+	if [ "$cmd" = "stop" ] || [ "$cmd" = "restart" ]; then
+		docker stop dyndoc; docker rm dyndoc
+	fi
+	if [ "$cmd" = "start" ] || [ "$cmd" = "restart" ]; then
+		docker run -d \
+		-p 7777:7777 \
+		-v ${dynproj}:/dyndoc-proj \
+		-v ${dynlib}:/dyndoc-library \
+		--name dyndoc \
+		dyndoc
+	fi
+	echo "docker dyndoc: $cmd server!"
+;;
+R | irb  | gem) 
+	shift;
+	docker exec -ti dyndoc $cmd $*
+;;
+prj)
+	shift
+	$cmd2="$1"
+	case "$cmd2" in
+	new)
+		# Use a template script to generate locate  
+		# model = "$2"
+		# if [ "$model" = "" ]; model="default"; fi;   
+		# mkdir -p ${dynproj}/{src,share,build,public}
+	;;
+	*)
+	;;
+	esac
+;;
+*)
+	dir_resolve() {
+		cd "$1" 2>/dev/null || return $?  # cd to desired directory; if fail, quell any error messages but return exit status
+		echo "`pwd -P`" # output full, link-resolved path
+	}
+
+	function abs_path {
+  		(cd "$(dirname '$1')" &>/dev/null && printf "%s/%s" "$(pwd)" "${1##*/}")
+	}
+	last="${@: -1}"
+	length=$(($#-1))
+	all_but_last="${@:1:$length}"
+	filename=`abs_path ${last}`
+	filename2=${filename/${dynproj}//dyndoc-proj}
+	docker exec dyndoc dyn $all_but_last $filename2
+;;
+esac

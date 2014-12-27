@@ -1,7 +1,13 @@
 :doc_list=>["main"],
 :docs=>{
-	"main"=>{
-    	:cmd=>[:save],
-    	:tag=>["r","ruby","pandoc","dyndoc"]
+	"main"=> {
+    	:cmd=>[:save!],
+    	:tag=>["r","ruby","pandoc","dyndoc","texlive-full"],
+    	:filename_doc => "main/Dockerfile"
+	},
+	"notexlive" => {
+		:cmd=>[:save!],
+    	:tag=>["r","ruby","pandoc","dyndoc"],
+    	:filename_doc => "notexlive/Dockerfile"
 	}
 }

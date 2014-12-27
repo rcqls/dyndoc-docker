@@ -120,14 +120,67 @@ RUN mkdir -p /dyndoc && echo "/dyndoc" > $HOME/.dyndoc_home
 
 WORKDIR /tmp/dyndoc
 
-RUN git clone https://github.com/rcqls/dyndoc-ruby-install.git && cp -r dyndoc-ruby-install/dyndoc_basic_root_structure/* /dyndoc
-
-WORKDIR /dyndoc
+RUN git clone https://github.com/rcqls/dyndoc-ruby-install.git && cp -r ./dyndoc-ruby-install/dyndoc_basic_root_structure/* /dyndoc
 
 RUN rm -fr /tmp/dyndoc
 
 RUN ln -s /dyndoc/bin/dyndoc-compile.rb /usr/local/bin/dyn \
-	&& ln -s /dyndoc/bin/dyndoc-package.rb /usr/local/bin/dpm
+	&& ln -s /dyndoc/bin/dyndoc-package.rb /usr/local/bin/dpm \
+	&& ln -s /dyndoc/bin/dyndoc-server-simple.rb /usr/local/bin/dyn-srv
 
+## mountpoints are for
+RUN mkdir /dyndoc-library
+VOLUME /dyndoc-library
+## ruby:	/dyndoc-library/ruby
+ENV GEM_PATH /dyndoc-library/ruby:$GEM_HOME
+## R:		/dyndoc-library/R
+ENV R_LIBS_USER /dyndoc-library/R
+## dyndoc: 	/dyndoc-library/library
+RUN echo "/dyndoc-library/library" > /dyndoc/etc/dyndoc_library_path
+
+## Latex texlive full without doc
+
+RUN mkdir /texlive2014nodoc
+
+WORKDIR /texlive2014nodoc
+
+COPY full2014nodoc.profile /texlive2014nodoc/
+
+RUN  apt-get update && apt-get install -y wget tar perl fontconfig \
+     && wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz \
+     && tar -xvf *.tar.gz 
+RUN cd install-tl-* \
+    && ./install-tl --profile /texlive2014nodoc/full2014nodoc.profile
+
+RUN rm -fr /texlive2014nodoc
+
+ENV PATH $PATH:/usr/local/texlive/2014/bin/x86_64-linux
+
+## Last change for .gemrc to make "gem (un)install <package>" persistant  
+RUN echo "gem: --no-rdoc --no-ri -i /dyndoc-library/ruby" > ~/.gemrc
+
+
+
+# cleanup package manager
+
+RUN apt-get autoclean && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+## the dyndoc projects folder
+
+RUN mkdir /dyndoc-proj
+
+VOLUME /dyndoc-proj
+
+WORKDIR /dyndoc-proj
+
+## Port exposed by dyn-srv
+
+EXPOSE 7777
+
+## the server to expose
+
+CMD ["/usr/local/bin/dyn-srv"]
+
+## END
 
 
