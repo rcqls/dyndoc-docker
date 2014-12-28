@@ -1,23 +1,48 @@
 #!/bin/bash
 
-## Rmk: no "~" below since "docker run -v" requires full path 
-dynlib="${HOME}/.dyndoc-library"
-dynproj="${HOME}/.dyndoc-proj"
+function abs_path {
+  	(cd "$(dirname '$1')" &>/dev/null && printf "%s/%s" "$(pwd)" "${1##*/}")
+}
+
+if ! [ "${DYNDOC_DOCKER_HOME}" ] && [ -f "${HOME}/.dyndoc_docker_home" ]; then
+		DYNDOC_DOCKER_HOME="`cat ${HOME}/.dyndoc_docker_home`"
+fi
+if [ "${DYNDOC_DOCKER_HOME}" ]; then
+		if ! [ "${DYNDOC_DOCKER_LIBRARY}" ]; then
+			DYNDOC_DOCKER_LIBRARY="${DYNDOC_DOCKER_HOME}/library"
+		fi
+		if ! [ "${DYNDOC_DOCKER_PROJECT}" ]; then
+			DYNDOC_DOCKER_PROJECT="${DYNDOC_DOCKER_HOME}/proj"
+		fi
+fi
+## docker run -v requires absolute path!
+if [ "${DYNDOC_DOCKER_LIBRARY}" ]; then
+	DYNDOC_DOCKER_LIBRARY=`abs_path "${DYNDOC_DOCKER_LIBRARY}"`
+else	 
+	echo "Environment variable DYNDOC_DOCKER_LIBRARY is unset"
+	exit
+fi
+if [ "${DYNDOC_DOCKER_PROJECT}" ]; then	
+	DYNDOC_DOCKER_PROJECT=`abs_path "${DYNDOC_DOCKER_PROJECT}"`
+else	 
+	echo "Environment variable DYNDOC_DOCKER_PROJECT is unset"
+	exit
+fi
 
 cmd="$1"
 
-case "$1" in
+case "$cmd" in
 start | restart | stop)
 	if [ "$cmd" = "stop" ] || [ "$cmd" = "restart" ]; then
-		docker stop dyndoc; docker rm dyndoc
+		docker stop dyndoc &>/dev/null; docker rm dyndoc &>/dev/null
 	fi
 	if [ "$cmd" = "start" ] || [ "$cmd" = "restart" ]; then
 		docker run -d \
 		-p 7777:7777 \
-		-v ${dynproj}:/dyndoc-proj \
-		-v ${dynlib}:/dyndoc-library \
+		-v ${DYNDOC_DOCKER_PROJECT}:/dyndoc-proj \
+		-v ${DYNDOC_DOCKER_LIBRARY}:/dyndoc-library \
 		--name dyndoc \
-		dyndoc
+		dyndoc &>/dev/null
 	fi
 	echo "docker dyndoc: $cmd server!"
 ;;
@@ -33,26 +58,18 @@ prj)
 		# Use a template script to generate locate  
 		# model = "$2"
 		# if [ "$model" = "" ]; model="default"; fi;   
-		# mkdir -p ${dynproj}/{src,share,build,public}
+		# mkdir -p ${DYNDOC_DOCKER_PROJECT}/$2{src,share,build,public}
 	;;
 	*)
 	;;
 	esac
 ;;
 *)
-	dir_resolve() {
-		cd "$1" 2>/dev/null || return $?  # cd to desired directory; if fail, quell any error messages but return exit status
-		echo "`pwd -P`" # output full, link-resolved path
-	}
-
-	function abs_path {
-  		(cd "$(dirname '$1')" &>/dev/null && printf "%s/%s" "$(pwd)" "${1##*/}")
-	}
 	last="${@: -1}"
 	length=$(($#-1))
 	all_but_last="${@:1:$length}"
 	filename=`abs_path ${last}`
-	filename2=${filename/${dynproj}//dyndoc-proj}
+	filename2=${filename/${DYNDOC_DOCKER_PROJECT}//dyndoc-proj}
 	docker exec dyndoc dyn $all_but_last $filename2
 ;;
 esac

@@ -74,6 +74,24 @@ RUN gem install bundler \
 # don't create ".bundle" in all our apps
 ENV BUNDLE_APP_CONFIG $GEM_HOME
 
+## Latex texlive full without doc
+
+RUN mkdir /texlive2014nodoc
+
+WORKDIR /texlive2014nodoc
+
+COPY full2014nodoc.profile /texlive2014nodoc/
+
+RUN  apt-get update && apt-get install -y wget tar perl fontconfig \
+     && wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz \
+     && tar -xvf *.tar.gz 
+RUN cd install-tl-* \
+    && ./install-tl --profile /texlive2014nodoc/full2014nodoc.profile
+
+RUN rm -fr /texlive2014nodoc
+
+ENV PATH $PATH:/usr/local/texlive/2014/bin/x86_64-linux
+
 ## Pandoc
 
 RUN apt-get update -y && apt-get install -y pandoc
@@ -131,31 +149,16 @@ RUN ln -s /dyndoc/bin/dyndoc-compile.rb /usr/local/bin/dyn \
 ## mountpoints are for
 RUN mkdir /dyndoc-library
 VOLUME /dyndoc-library
-## ruby:	/dyndoc-library/ruby
-ENV GEM_PATH /dyndoc-library/ruby:$GEM_HOME
+
+## dyndoc: 	/dyndoc-library/dyndoc
+RUN echo "/dyndoc-library/dyndoc" > /dyndoc/etc/dyndoc_library_path
+ENV DYNDOC_LIBRARY "/dyndoc-library/dyndoc"
+
 ## R:		/dyndoc-library/R
 ENV R_LIBS_USER /dyndoc-library/R
-## dyndoc: 	/dyndoc-library/library
-RUN echo "/dyndoc-library/library" > /dyndoc/etc/dyndoc_library_path
 
-## Latex texlive full without doc
-
-RUN mkdir /texlive2014nodoc
-
-WORKDIR /texlive2014nodoc
-
-COPY full2014nodoc.profile /texlive2014nodoc/
-
-RUN  apt-get update && apt-get install -y wget tar perl fontconfig \
-     && wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz \
-     && tar -xvf *.tar.gz 
-RUN cd install-tl-* \
-    && ./install-tl --profile /texlive2014nodoc/full2014nodoc.profile
-
-RUN rm -fr /texlive2014nodoc
-
-ENV PATH $PATH:/usr/local/texlive/2014/bin/x86_64-linux
-
+## ruby:	/dyndoc-library/ruby
+ENV GEM_PATH /dyndoc-library/ruby:$GEM_HOME
 ## Last change for .gemrc to make "gem (un)install <package>" persistant  
 RUN echo "gem: --no-rdoc --no-ri -i /dyndoc-library/ruby" > ~/.gemrc
 
