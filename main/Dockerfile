@@ -152,7 +152,7 @@ VOLUME /dyndoc-library
 
 ## dyndoc: 	/dyndoc-library/dyndoc
 RUN echo "/dyndoc-library/dyndoc" > /dyndoc/etc/dyndoc_library_path
-ENV DYNDOC_LIBRARY "/dyndoc-library/dyndoc"
+ENV DYNDOC_LIBRARY /dyndoc-library/dyndoc
 
 ## R:		/dyndoc-library/R
 ENV R_LIBS_USER /dyndoc-library/R
