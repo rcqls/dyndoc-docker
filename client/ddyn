@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# copy from https://github.com/mkropat/sh-realpath.git
+# copied from https://github.com/mkropat/sh-realpath.git
 function abs_path {
     canonicalize_path "$(resolve_symlinks "$1")"
 }
@@ -73,6 +73,7 @@ _canonicalize_file_path() {
 # 		DYNDOC_DOCKER_HOME="`cat ${HOME}/.dyndoc_docker_home`"
 # fi
 
+ddyn() {
 if [ "${DYNDOC_DOCKER_HOME}" ]; then
 		if ! [ "${DYNDOC_DOCKER_LIBRARY}" ]; then
 			DYNDOC_DOCKER_LIBRARY="${DYNDOC_DOCKER_HOME}/library"
@@ -80,7 +81,11 @@ if [ "${DYNDOC_DOCKER_HOME}" ]; then
 		if ! [ "${DYNDOC_DOCKER_PROJECT}" ]; then
 			DYNDOC_DOCKER_PROJECT="${DYNDOC_DOCKER_HOME}/proj"
 		fi
+else
+	echo "Environment variable DYNDOC_DOCKER_HOME is unset"
+	exit
 fi
+
 ## docker run -v requires absolute path!
 if [ "${DYNDOC_DOCKER_LIBRARY}" ]; then
 	DYNDOC_DOCKER_LIBRARY=`abs_path "${DYNDOC_DOCKER_LIBRARY}"`
@@ -96,7 +101,7 @@ else
 fi
 
 cmd="$1"
-
+shift
 case "$cmd" in
 env)
 	echo "DYNDOC_DOCKER_HOME=$DYNDOC_DOCKER_HOME"
@@ -118,25 +123,60 @@ start | restart | stop)
 	echo "docker dyndoc: $cmd server!"
 ;;
 R | irb  | gem) 
-	shift;
 	docker exec -ti dyndoc $cmd $*
 ;;
 bash)
 	docker exec -ti dyndoc /bin/bash
 ;;
 prj)
-	shift
-	$cmd2="$1"
+	cmd2="$1"
+	projname="$2"
+	projroot="${DYNDOC_DOCKER_PROJECT}/${projname}"
+	etcproj="${DYNDOC_DOCKER_HOME}/etc/proj"
 	case "$cmd2" in
-	new)
-		# Use a template script to generate locate  
-		# model = "$2"
-		# if [ "$model" = "" ]; model="default"; fi;   
-		# mkdir -p ${DYNDOC_DOCKER_PROJECT}/$2{src,share,build,public}
+	model)
+		model="$2"
+		if [ -e "${etcproj}/model_${model}.sh" ]; then
+			echo "$2" > ${etcproj}/default.model
+			echo "default model is now ${model}"
+		else
+			echo "Warning: $2 is not a proper model"
+		fi
 	;;
 	*)
+		# The 2 following lines ensures that actions are loaded!
+		model="`cat ${etcproj}/default.model`"
+		. ${etcproj}/model_${model}.sh
+		shift;shift
+		##echo "model_action ${cmd2} ${projname} $*"
+		model_action ${cmd2} ${projname} $*
 	;;
 	esac
+;;
+set | get) #shortcut of "ddyn prj cd|set <proj>"
+	###DEBUG: echo "_ddyn_prj $cmd $*"
+	_ddyn_prj $cmd $* 
+;;
+cd )
+	proj="$1"
+	path=""
+	if [[ $proj =~ (.*):(.*) ]]; then 
+		proj=${BASH_REMATCH[1]}
+		path=${BASH_REMATCH[2]}
+	fi
+	### DEBUG: echo "<proj=$proj and path=$path >"
+	_ddyn_prj set $proj
+	if [ "$(_ddyn_prj name)" = "$proj" ]; then
+		goto="$(_ddyn_prj root)/$path"
+		if [ -d "$goto" ]; then
+			cd $goto
+		else
+			echo "$goto is not a valid directory!"
+		fi
+	fi 
+;;
+add)
+	ddyn prj $(_ddyn_prj name) $*
 ;;
 *)
 	last="${@: -1}"
@@ -144,6 +184,28 @@ prj)
 	all_but_last="${@:1:$length}"
 	filename=`abs_path ${last}`
 	filename2=${filename/${DYNDOC_DOCKER_PROJECT}//dyndoc-proj}
+	if [ "$filename" = "$filename2" ]; then
+		echo "dyndoc file to compile not in the project root!"
+		exit
+	fi
 	docker exec dyndoc dyn $all_but_last $filename2
 ;;
 esac
+}
+
+_ddyn_prj() {
+	case "$1" in
+	set)
+		projname="$2"
+		projroot="${DYNDOC_DOCKER_PROJECT}/${projname}"
+		if [ -d $projroot ]; then 
+			export current_projname="${projname}"
+			export current_projroot="${projroot}"
+		else
+			echo "$projname is not a valid project name!"
+		fi
+	;;
+	name) echo "$current_projname";;
+	root) echo "$current_projroot";;
+	esac
+}
