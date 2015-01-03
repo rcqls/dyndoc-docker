@@ -193,7 +193,6 @@ cd )
 	filename=`abs_path ${last}`
 	filename2=${filename/${DYNDOC_DOCKER_PROJECT}//dyndoc-proj}
 	if [ "$filename" = "$filename2" ]; then
-		echo $filename
 		_ddyn_in_room ${filename} $dyn_options
 	else
 		docker exec dyndoc dyn $dyn_options $filename2
@@ -202,12 +201,14 @@ cd )
 esac
 }
 
+## to compile a dyndoc file not in the project folder!
 _ddyn_in_room() {
 	filename="$1"
 	dyn_options="$2"
 	dname=`dirname $filename`
 	bname=`basename $filename`
-	projroot="${DYNDOC_DOCKER_PROJECT}/rooms/${bname%%.*}"
+	#no extension for bname and dname at the end with / replaced by - 
+	projroot="${DYNDOC_DOCKER_PROJECT}/rooms/${bname%%.*}${dname//\//-}" 
 	projname="${projroot}/${bname}"
 	# clean room directory if existing and not empty 
 	if [ -d ${projroot} ]; then rm -fr ${projroot}/*; fi
@@ -218,7 +219,7 @@ _ddyn_in_room() {
 	cp -r * ${projroot}
 	echo "current files copied in temporary room ${projroot}!"
 	projname2=${projname/${DYNDOC_DOCKER_PROJECT}//dyndoc-proj}
-	echo "$projname $projname2 to compile"
+	echo "$projname2 to compile"
 	docker exec dyndoc dyn $dyn_options $projname2
 	cd $dname
 	cp -r ${projroot}/* .
