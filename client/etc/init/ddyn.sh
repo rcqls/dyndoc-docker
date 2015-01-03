@@ -1,74 +1,5 @@
 #!/bin/bash
 
-# copied from https://github.com/mkropat/sh-realpath.git
-function abs_path {
-    canonicalize_path "$(resolve_symlinks "$1")"
-}
-
-resolve_symlinks() {
-    _resolve_symlinks "$1"
-}
-
-_resolve_symlinks() {
-    _assert_no_path_cycles "$@" || return
-
-    local dir_context path
-    path=$(readlink -- "$1")
-    if [ $? -eq 0 ]; then
-        dir_context=$(dirname -- "$1")
-        _resolve_symlinks "$(_prepend_dir_context_if_necessary "$dir_context" "$path")" "$@"
-    else
-        printf '%s\n' "$1"
-    fi
-}
-
-_prepend_dir_context_if_necessary() {
-    if [ "$1" = . ]; then
-        printf '%s\n' "$2"
-    else
-        _prepend_path_if_relative "$1" "$2"
-    fi
-}
-
-_prepend_path_if_relative() {
-    case "$2" in
-        /* ) printf '%s\n' "$2" ;;
-         * ) printf '%s\n' "$1/$2" ;;
-    esac
-}
-
-_assert_no_path_cycles() {
-    local target path
-
-    target=$1
-    shift
-
-    for path in "$@"; do
-        if [ "$path" = "$target" ]; then
-            return 1
-        fi
-    done
-}
-
-canonicalize_path() {
-    if [ -d "$1" ]; then
-        _canonicalize_dir_path "$1"
-    else
-        _canonicalize_file_path "$1"
-    fi
-}
-
-_canonicalize_dir_path() {
-    (cd "$1" 2>/dev/null && pwd -P)
-}
-
-_canonicalize_file_path() {
-    local dir file
-    dir=$(dirname -- "$1")
-    file=$(basename -- "$1")
-    (cd "$dir" 2>/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file")
-}
-
 # # Not used!
 # function item_in_list {
 #   local list="$2"
@@ -86,6 +17,8 @@ _canonicalize_file_path() {
 # 		DYNDOC_DOCKER_HOME="`cat ${HOME}/.dyndoc_docker_home`"
 # fi
 
+. ${DYNDOC_DOCKER_HOME}/etc/init/sh-realpath.sh
+
 ddyn() {
 if [ "${DYNDOC_DOCKER_HOME}" ]; then
 		if ! [ "${DYNDOC_DOCKER_LIBRARY}" ]; then
@@ -101,13 +34,13 @@ fi
 
 ## docker run -v requires absolute path!
 if [ "${DYNDOC_DOCKER_LIBRARY}" ]; then
-	DYNDOC_DOCKER_LIBRARY=`abs_path "${DYNDOC_DOCKER_LIBRARY}"`
+	DYNDOC_DOCKER_LIBRARY=`realpath "${DYNDOC_DOCKER_LIBRARY}"`
 else	 
 	echo "Environment variable DYNDOC_DOCKER_LIBRARY is unset"
 	exit
 fi
 if [ "${DYNDOC_DOCKER_PROJECT}" ]; then	
-	DYNDOC_DOCKER_PROJECT=`abs_path "${DYNDOC_DOCKER_PROJECT}"`
+	DYNDOC_DOCKER_PROJECT=`realpath "${DYNDOC_DOCKER_PROJECT}"`
 else	 
 	echo "Environment variable DYNDOC_DOCKER_PROJECT is unset"
 	exit
@@ -115,6 +48,16 @@ fi
 
 cmd="$1"
 case "$cmd" in
+help)
+	echo "Usage:"
+	echo "------"
+	echo "*) ddyn env: environment variables"
+	echo "*) ddyn start|restart|stop: dyndoc docker container management"
+	echo "*) ddyn bash: launch bash shell inside running dyndoc docker container"
+	echo "*) ddyn R|irb|gem: R and ruby management"
+	echo "*) ddyn <dyn_options> <file>[.dyn]"
+
+;;
 env)
 	echo "DYNDOC_DOCKER_HOME=$DYNDOC_DOCKER_HOME"
 	echo "DYNDOC_DOCKER_LIBRARY=$DYNDOC_DOCKER_LIBRARY"
@@ -190,7 +133,7 @@ cd )
 	length=$(($#-1))
 	dyn_options="${@:1:$length}" #all but last
 	##echo "<$last> <$dyn_options>"
-	filename=`abs_path ${last}`
+	filename=`realpath ${last}`
 	filename2=${filename/${DYNDOC_DOCKER_PROJECT}//dyndoc-proj}
 	if [ "$filename" = "$filename2" ]; then
 		_ddyn_in_room ${filename} $dyn_options
@@ -207,23 +150,33 @@ _ddyn_in_room() {
 	dyn_options="$2"
 	dname=`dirname $filename`
 	bname=`basename $filename`
-	#no extension for bname and dname at the end with / replaced by - 
-	projroot="${DYNDOC_DOCKER_PROJECT}/rooms/${bname%%.*}${dname//\//-}" 
-	projname="${projroot}/${bname}"
-	# clean room directory if existing and not empty 
-	if [ -d ${projroot} ]; then rm -fr ${projroot}/*; fi
+	if ! [ -e "${bname%%.dyn}.dyn" ]; then 
+		echo "no file ${bname%%.dyn}.dyn to compile!"
+	else
+		#no extension for bname and dname at the end with / replaced by - 
+		projroot="${DYNDOC_DOCKER_PROJECT}/rooms/${bname%%.*}${dname//\//-}" 
+		projname="${projroot}/${bname}"
+		# clean room directory if existing and not empty 
+		if [ -d ${projroot} ]; then rm -fr ${projroot}/*; fi
 
-	echo "temporary room ${projroot} created!"
-	mkdir -p ${projroot}
-	cd $dname
-	cp -r * ${projroot}
-	echo "current files copied in temporary room ${projroot}!"
-	projname2=${projname/${DYNDOC_DOCKER_PROJECT}//dyndoc-proj}
-	echo "$projname2 to compile"
-	docker exec dyndoc dyn $dyn_options $projname2
-	cd $dname
-	cp -r ${projroot}/* .
-	echo "current files copied from temporary room ${projroot}!"
+		echo "temporary room ${projroot} created!"
+		mkdir -p ${projroot}
+		cd $dname
+		if [ -e ".files" ]; then
+			## TODO: consider the contents of .files to filter the files to copy
+			cp -r * ${projroot}
+		else
+			cp "${bname%%.dyn}.dyn" ${projroot}
+			if [ -e "${bname%%.dyn}.dyn_cfg" ]; then cp "${bname%%.dyn}.dyn_cfg" ${projroot}; fi
+		fi
+		echo "current files copied in temporary room ${projroot}!"
+		projname2=${projname/${DYNDOC_DOCKER_PROJECT}//dyndoc-proj}
+		echo "$projname2 to compile"
+		docker exec dyndoc dyn $dyn_options $projname2
+		cd $dname
+		cp -r ${projroot}/* .
+		echo "current files copied from temporary room ${projroot}!"
+	fi
 }
 
 _ddyn_prj() {
