@@ -1,22 +1,14 @@
 #!/bin/bash
 
-# # Not used!
-# function item_in_list {
-#   local list="$2"
-#   local item="$1"
-#   if [[ $list =~ (^|[[:space:]])"$item"($|[[:space:]]) ]] ; then
-#     # yes, list include item
-#     result="${item}"
-#   else
-#     result=""
-#   fi
-#   return $result
-# }
+## To update 
+export BOOT2DOCKER_CMD="boot2docker" #comment this line for linux without boot2docker
+export DOCKER_CMD="docker" #or "sudo docker"
 
-# if ! [ "${DYNDOC_DOCKER_HOME}" ] && [ -f "${HOME}/.dyndoc_docker_home" ]; then
-# 		DYNDOC_DOCKER_HOME="`cat ${HOME}/.dyndoc_docker_home`"
-# fi
+#export DOCKER_DYNDOC_CONTAINER="dyndoc" 
+#or 
+export DOCKER_DYNDOC_CONTAINER="rcqls/dyndoc-docker"
 
+##
 . ${DYNDOC_DOCKER_HOME}/etc/init/sh-realpath.sh
 
 ddyn() {
@@ -64,25 +56,34 @@ env)
 	echo "DYNDOC_DOCKER_PROJECT=$DYNDOC_DOCKER_PROJECT"
 ;;
 start | restart | stop)
+	if [ "${BOOT2DOCKER_CMD}" ] && [ `${BOOT2DOCKER_CMD} status` = "poweroff" ]; then
+		${BOOT2DOCKER_CMD} start
+	fi
+	if [ "${BOOT2DOCKER_CMD}" ] && [ `${BOOT2DOCKER_CMD} status` = "saved" ]; then
+		${BOOT2DOCKER_CMD} up
+	fi
+	if [ "${BOOT2DOCKER_CMD}" ] && [ `${BOOT2DOCKER_CMD} status` = "aborted" ]; then
+		${BOOT2DOCKER_CMD} up
+	fi
 	if [ "$cmd" = "stop" ] || [ "$cmd" = "restart" ]; then
-		docker stop dyndoc &>/dev/null; docker rm dyndoc &>/dev/null
+		${DOCKER_CMD} stop dyndoc &>/dev/null; ${DOCKER_CMD} rm dyndoc &>/dev/null
 	fi
 	if [ "$cmd" = "start" ] || [ "$cmd" = "restart" ]; then
-		docker run -d \
+		${DOCKER_CMD} run -d \
 		-p 7777:7777 \
 		-v ${DYNDOC_DOCKER_PROJECT}:/dyndoc-proj \
 		-v ${DYNDOC_DOCKER_LIBRARY}:/dyndoc-library \
 		--name dyndoc \
-		dyndoc &>/dev/null
+		${DOCKER_DYNDOC_CONTAINER} &>/dev/null
 	fi
 	echo "docker dyndoc: $cmd server!"
 ;;
-R | irb  | gem) 
+R | irb  | gem | ruby) 
 	shift
-	docker exec -ti dyndoc $cmd $*
+	${DOCKER_CMD} exec -ti dyndoc $cmd $*
 ;;
 bash)
-	docker exec -ti dyndoc /bin/bash
+	${DOCKER_CMD} exec -ti dyndoc /bin/bash
 ;;
 prj)
 	shift
@@ -138,7 +139,7 @@ cd )
 	if [ "$filename" = "$filename2" ]; then
 		_ddyn_in_room ${filename} $dyn_options
 	else
-		docker exec dyndoc dyn $dyn_options $filename2
+		${DOCKER_CMD} exec dyndoc dyn $dyn_options $filename2
 	fi
 ;;
 esac
@@ -172,7 +173,7 @@ _ddyn_in_room() {
 		echo "current files copied in temporary room ${projroot}!"
 		projname2=${projname/${DYNDOC_DOCKER_PROJECT}//dyndoc-proj}
 		echo "$projname2 to compile"
-		docker exec dyndoc dyn $dyn_options $projname2
+		${DOCKER_CMD} exec dyndoc dyn $dyn_options $projname2
 		cd $dname
 		cp -r ${projroot}/* .
 		echo "current files copied from temporary room ${projroot}!"
