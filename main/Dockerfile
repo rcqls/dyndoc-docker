@@ -99,6 +99,26 @@ ENV PATH $PATH:/usr/local/texlive/2014/bin/x86_64-linux
 
 RUN apt-get update -y && apt-get install -y pandoc
 
+## Ttm 
+
+RUN mkdir -p /tmp/ttm
+
+WORKDIR /tmp/ttm
+
+RUN wget http://hutchinson.belmont.ma.us/tth/mml/ttmL.tar.gz
+
+RUN tar xzvf ttmL.tar.gz
+
+WORKDIR /tmp/ttm/ttmL
+
+RUN mkdir -p $HOME/bin
+
+ENV PATH $HOME/bin:$PATH
+
+RUN ./ttminstall
+
+RUN rm -fr /tmp/ttm
+
 ## Dyndoc
 
 RUN apt-get update -y && apt-get install -y git

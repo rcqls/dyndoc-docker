@@ -128,6 +128,8 @@ ENV PATH $HOME/bin:$PATH
 
 RUN ./ttminstall
 
+RUN rm -fr /tmp/ttm
+
 [#??]dyndoc[#>]## Dyndoc
 
 RUN apt-get update -y && apt-get install -y git
