@@ -2,7 +2,7 @@
 :docs=>{
 	"main"=> {
     	:cmd=>[:save!],
-    	:tag=>["r","ruby","pandoc","dyndoc","texlive-full"],
+    	:tag=>["r","ruby","pandoc","dyndoc","texlive-full","ttm"],
     	:filename_doc => "main/Dockerfile"
 	},
 	"notexlive" => {
