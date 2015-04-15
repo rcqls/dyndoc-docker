@@ -111,9 +111,9 @@ RUN tar xzvf ttmL.tar.gz
 
 WORKDIR /tmp/ttm/ttmL
 
-RUN mkdir -p $HOME/bin
+RUN mkdir -p /root/bin
 
-ENV PATH $HOME/bin:$PATH
+ENV PATH /root/bin:$PATH
 
 RUN ./ttminstall
 
@@ -176,6 +176,10 @@ VOLUME /dyndoc-library
 ## dyndoc: 	/dyndoc-library/dyndoc
 RUN echo "/dyndoc-library/dyndoc" > /dyndoc/etc/dyndoc_library_path
 ENV DYNDOC_LIBRARY /dyndoc-library/dyndoc
+
+## R packages
+
+RUN Rscript -e 'install.packages("base64")'
 
 ## R:		/dyndoc-library/R
 ENV R_LIBS_USER /dyndoc-library/R
