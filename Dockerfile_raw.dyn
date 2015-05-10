@@ -1,15 +1,15 @@
 [#%]This is a template for dyndoc Dockerfile: just run "dyn Dockerfile_raw.dyn"
 
 Rmk: latex is not installed by default since it can be installed in another container
-(for example, "docker pull muzili/texlive") 
-[#=]distrib[debian:testing]
+(for example, "docker pull muzili/texlive")
+[#=]distrib[<<name[debian]<<version[testing]]
 [#=]maintainer[Cqls Team]
 [#=]locale[<<lang[en_US]<<enc[UTF-8]]
 [#=]R-version[3.2.0][#=]ruby-version[<<major[2.1]<<minor[5]]
 [#=]dyndoc[<<home[/dyndoc]<<library[/dyndoc-library]<<proj[/dyndoc-proj]]
 [#??]locale-fr[#=]locale[<<lang[fr_FR]<<enc[UTF-8]]
-[#??]jessie[#=]distrib[debian:jessie]
-[#??]end[#>]FROM #{distrib}
+[#??]testing[#=]distrib[debian:testing]
+[#??]end[#>]FROM #{distrib.name}:#{distrib.version}
 
 MAINTAINER "#{maintainer}"
 
@@ -40,7 +40,7 @@ ENV LANG #{locale.lang}.#{locale.enc}
 
 ## Use Debian unstable via pinning -- new style via APT::Default-Release
 RUN echo "deb http://http.debian.net/debian sid main" > /etc/apt/sources.list.d/debian-unstable.list \
-    && echo 'APT::Default-Release "jessie";' > /etc/apt/apt.conf.d/default
+    && echo 'APT::Default-Release "#{distrib.version}";' > /etc/apt/apt.conf.d/default
 
 
 ENV R_BASE_VERSION #{R-version}
