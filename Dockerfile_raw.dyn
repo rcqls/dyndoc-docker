@@ -2,7 +2,7 @@
 
 Rmk: latex is not installed by default since it can be installed in another container
 (for example, "docker pull muzili/texlive") 
-[#=]distrib[debian:jessie]
+[#=]distrib[debian:testing]
 [#=]maintainer[Cqls Team]
 [#=]locale[<<lang[en_US]<<enc[UTF-8]]
 [#=]R-version[3.2.0][#=]ruby-version[<<major[2.1]<<minor[5]]
