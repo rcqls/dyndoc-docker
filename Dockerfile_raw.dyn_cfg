@@ -7,7 +7,7 @@
 	},
 	"notexlive" => {
 		:cmd=>[:save!],
-    	:tag=>["r","ruby","pandoc","dyndoc"],
+    	:tag=>["r","ruby","pandoc","dyndoc","ttm"],
     	:filename_doc => "notexlive/Dockerfile"
 	}
 }
