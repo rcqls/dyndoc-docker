@@ -5,7 +5,7 @@ Rmk: latex is not installed by default since it can be installed in another cont
 [#=]distrib[debian:jessie]
 [#=]maintainer[Cqls Team]
 [#=]locale[<<lang[en_US]<<enc[UTF-8]]
-[#=]R-version[3.1.3][#=]ruby-version[<<major[2.1]<<minor[5]]
+[#=]R-version[3.2.0][#=]ruby-version[<<major[2.1]<<minor[5]]
 [#=]dyndoc[<<home[/dyndoc]<<library[/dyndoc-library]<<proj[/dyndoc-proj]]
 [#??]locale-fr[#=]locale[<<lang[fr_FR]<<enc[UTF-8]]
 [#??]jessie[#=]distrib[debian:jessie]
