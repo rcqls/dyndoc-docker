@@ -229,7 +229,9 @@ RUN wget https://julialang.s3.amazonaws.com/bin/linux/x64/#{julia-version.major}
 
 RUN tar xzvf julia-#{julia-version.major}.#{julia-version.minor}-linux-x86_64.tar.gz
 
-RUN mv julia-* /julia-#{julia-version.major}.#{julia-version.minor}
+WORKDIR /
+
+RUN mv tmp/julia-* julia-#{julia-version.major}.#{julia-version.minor}
 
 RUN rm -fr /tmp/julia
 
