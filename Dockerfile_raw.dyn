@@ -10,6 +10,7 @@ Rmk: latex is not installed by default since it can be installed in another cont
 [#=]julia-version[<<major[0.3]<<minor[10]]
 [#??]locale-fr[#=]locale[<<lang[fr_FR]<<enc[UTF-8]]
 [#??]testing[#=]distrib[<<name[debian]<<version[testing]]
+[#??]dist-rocker-base[#=]distrib[<<name[rocker/r-base]<<version[latest]]
 [#??]dist-dyndoc-docker-base[#=]distrib[<<name[rcqls/dyndoc-docker]<<version[base]]
 [#??]dist-dyndoc-docker-default[#=]distrib[<<name[rcqls/dyndoc-docker]<<version[latest]]
 [#??]end[#>]FROM #{distrib.name}:#{distrib.version}
@@ -197,7 +198,7 @@ ENV DYNDOC_LIBRARY #{dyndoc.library}/dyndoc
 
 RUN Rscript -e 'install.packages("base64")'
 
-[#??]r[#>]## R:		#{dyndoc.library}/R
+[#??]r-env[#>]## R:		#{dyndoc.library}/R
 ENV R_LIBS_USER #{dyndoc.library}/R
 
 ## Install devtools R package and its dependencies

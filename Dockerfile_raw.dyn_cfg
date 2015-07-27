@@ -2,9 +2,14 @@
 :docs=>{
 	"base"=> {
     	:cmd=>[:save!],
-    	:tag=>["r","ruby","pandoc","texlive-full","ttm"],
+    	:tag=>["r","r-env","ruby","pandoc","texlive-full","ttm"],
     	:filename_doc => "base/Dockerfile"
 	},
+    "rocker"=> {
+        :cmd=>[:save!],
+        :tag=>["dist-rocker-base","r-env","ruby","pandoc","texlive-full","ttm"],
+        :filename_doc => "base/Dockerfile"
+    },
 	"main"=> {
     	:cmd=>[:save!],
     	:tag=>["dist-dyndoc-docker-base","dyndoc"],
