@@ -14,9 +14,9 @@ RUN wget https://julialang.s3.amazonaws.com/bin/linux/x64/0.3/julia-0.3.10-linux
 
 RUN tar xzvf julia-0.3.10-linux-x86_64.tar.gz
 
-WORKDIR /
+RUN mv "$(ls julia-*)" julia-0.3.10
 
-RUN mv tmp/julia-* julia-0.3.10
+RUN mv julia-0.3.10 /
 
 RUN rm -fr /tmp/julia
 
