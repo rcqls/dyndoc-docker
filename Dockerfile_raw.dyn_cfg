@@ -1,13 +1,28 @@
 :doc_list=>["main"],
 :docs=>{
+	"base"=> {
+    	:cmd=>[:save!],
+    	:tag=>["r","ruby","pandoc","texlive-full","ttm"],
+    	:filename_doc => "base/Dockerfile"
+	},
 	"main"=> {
     	:cmd=>[:save!],
-    	:tag=>["r","ruby","pandoc","dyndoc","texlive-full","ttm"],
+    	:tag=>["dist-dyndoc-docker-base","dyndoc"],
     	:filename_doc => "main/Dockerfile"
 	},
-	"notexlive" => {
+    "julia" => {
+        :cmd => [:save!],
+        :tag=>["dist-dyndoc-docker-default","julia"],
+        :filename_doc => "julia/Dockerfile"
+    },
+	"main-old"=> {
+    	:cmd=>[:save!],
+    	:tag=>["r","ruby","gem-bundle","pandoc","texlive-full","ttm","dyndoc"],
+    	:filename_doc => "main/Dockerfile"
+	},
+	"notexlive-old" => {
 		:cmd=>[:save!],
-    	:tag=>["r","ruby","pandoc","dyndoc","ttm"],
+    	:tag=>["r","ruby","gem-bundle","pandoc","dyndoc","ttm"],
     	:filename_doc => "notexlive/Dockerfile"
 	}
 }

@@ -5,13 +5,18 @@ Rmk: latex is not installed by default since it can be installed in another cont
 [#=]distrib[<<name[debian]<<version[testing]]
 [#=]maintainer[Cqls Team]
 [#=]locale[<<lang[en_US]<<enc[UTF-8]]
-[#=]R-version[3.2.0][#=]ruby-version[<<major[2.1]<<minor[5]]
+[#=]R-version[3.2.1][#=]ruby-version[<<major[2.1]<<minor[5]]
 [#=]dyndoc[<<home[/dyndoc]<<library[/dyndoc-library]<<proj[/dyndoc-proj]]
+[#=]julia-version[<<major[0.3]<<minor[10]]
 [#??]locale-fr[#=]locale[<<lang[fr_FR]<<enc[UTF-8]]
-[#??]testing[#=]distrib[debian:testing]
+[#??]testing[#=]distrib[<<name[debian]<<version[testing]]
+[#??]dist-dyndoc-docker-base[#=]distrib[<<name[rcqls/dyndoc-docker]<<version[base]]
+[#??]dist-dyndoc-docker-default[#=]distrib[<<name[rcqls/dyndoc-docker]<<version[latest]]
 [#??]end[#>]FROM #{distrib.name}:#{distrib.version}
 
 MAINTAINER "#{maintainer}"
+
+[#>]RUN apt-get update
 
 [#??]r[#>]## R Stuff (inspired from rocker/r-base)
 
@@ -23,7 +28,7 @@ RUN useradd docker \
 && chown docker:docker /home/docker \
 && addgroup docker staff
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
     ed \
     less \
     locales \
@@ -47,8 +52,7 @@ ENV R_BASE_VERSION #{R-version}
 
 ## Now install R and littler, and create a link for littler in /usr/local/bin
 ## Also set a default CRAN repo, and make sure littler knows about it too
-RUN apt-get update \
-    && apt-get install -t unstable -y --no-install-recommends \
+RUN apt-get install -t unstable -y --no-install-recommends \
         littler/unstable \
         r-base=${R_BASE_VERSION}* \
         r-base-dev=${R_BASE_VERSION}* \
@@ -65,7 +69,7 @@ RUN apt-get update \
 
 [#??]ruby[#>]## Ruby Stuff
 
-RUN apt-get update && apt-get install -y curl procps && rm -rf /var/lib/apt/lists/*
+RUN apt-get install -y curl procps && rm -rf /var/lib/apt/lists/*
 
 ENV RUBY_MAJOR #{ruby-version.major}
 ENV RUBY_VERSION #{ruby-version.major}.#{ruby-version.minor}
@@ -78,6 +82,7 @@ RUN apt-get update \
 # skip installing gem documentation
 RUN echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc"
 
+[#??]gem-bundle[#>]
 # install things globally, for great justice
 ENV GEM_HOME /usr/local/bundle
 ENV PATH $GEM_HOME/bin:$PATH
@@ -96,7 +101,7 @@ WORKDIR /#{texlive}
 
 COPY full2014nodoc.profile /#{texlive}/
 
-RUN  apt-get update && apt-get install -y wget tar perl fontconfig \
+RUN apt-get install -y wget tar perl fontconfig \
      && wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz \
      && tar -xvf *.tar.gz 
 RUN cd install-tl-* \
@@ -108,7 +113,7 @@ ENV PATH $PATH:/usr/local/texlive/2014/bin/x86_64-linux
 
 [#??]pandoc[#>]## Pandoc
 
-RUN apt-get update -y && apt-get install -y pandoc
+RUN apt-get install -y pandoc
 
 [#??]ttm[#>]## Ttm 
 
@@ -132,7 +137,7 @@ RUN rm -fr /tmp/ttm
 
 [#??]dyndoc[#>]## Dyndoc
 
-RUN apt-get update -y && apt-get install -y git
+RUN apt-get install -y git
 
 RUN gem install rake configliere ultraviolet
 
@@ -195,10 +200,37 @@ RUN Rscript -e 'install.packages("base64")'
 [#??]r[#>]## R:		#{dyndoc.library}/R
 ENV R_LIBS_USER #{dyndoc.library}/R
 
-[#??]ruby[#>]## ruby:	#{dyndoc.library}/ruby
+## Install devtools R package and its dependencies
+RUN apt-get install -y libxml2-dev  libcurl4-openssl-dev libssl-dev && install.r devtools
+
+[#??]gem-dyndoc[#>]
+# install things globally, for great justice
+ENV GEM_HOME #{dyndoc.library}/ruby
+ENV PATH $GEM_HOME/bin:$PATH
+RUN gem install bundler \
+    && bundle config --global path "$GEM_HOME" \
+    && bundle config --global bin "$GEM_HOME/bin"
+
+# don't create ".bundle" in all our apps
+ENV BUNDLE_APP_CONFIG $GEM_HOME
+[#??]gem-bundle[#>]## ruby:	#{dyndoc.library}/ruby
 ENV GEM_PATH #{dyndoc.library}/ruby:$GEM_HOME
 ## Last change for .gemrc to make "gem (un)install <package>" persistant  
 RUN echo "gem: --no-rdoc --no-ri -i #{dyndoc.library}/ruby" > ~/.gemrc
+
+[#??]julia[#>]
+
+RUN mkdir -p /tmp/julia
+
+WORKDIR /tmp/julia
+
+RUN wget https://julialang.s3.amazonaws.com/bin/linux/x64/#{julia-version.major}/julia-#{julia-version.major}.#{julia-version.minor}-linux-x86_64.tar.gz
+
+RUN tar xzvf julia-#{julia-version.major}.#{julia-version.minor}-linux-x86_64.tar.gz
+
+RUN mv julia-* /julia-#{julia-version.major}.#{julia-version.minor}
+
+RUN rm -fr /tmp/julia
 
 [#??]all[#>]
 
@@ -208,7 +240,7 @@ RUN apt-get autoclean && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /va
 
 ## the dyndoc projects folder
 
-RUN mkdir #{dyndoc.proj}
+RUN mkdir -p #{dyndoc.proj}
 
 VOLUME #{dyndoc.proj}
 
