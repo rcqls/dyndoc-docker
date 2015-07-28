@@ -11,6 +11,8 @@ Rmk: latex is not installed by default since it can be installed in another cont
 [#??]locale-fr[#=]locale[<<lang[fr_FR]<<enc[UTF-8]]
 [#??]testing[#=]distrib[<<name[debian]<<version[testing]]
 [#??]dist-rocker-base[#=]distrib[<<name[rocker/r-base]<<version[latest]]
+[#??]dist-dyndocker-base[#=]distrib[<<name[rcqls/dyndocker-base]<<version[latest]]
+[#??]dist-dyndocker-main[#=]distrib[<<name[rcqls/dyndocker-main]<<version[latest]]
 [#??]dist-dyndoc-docker-base[#=]distrib[<<name[rcqls/dyndoc-docker]<<version[base]]
 [#??]dist-dyndoc-docker-default[#=]distrib[<<name[rcqls/dyndoc-docker]<<version[latest]]
 [#??]end[#>]FROM #{distrib.name}:#{distrib.version}

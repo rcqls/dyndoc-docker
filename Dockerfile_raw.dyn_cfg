@@ -1,20 +1,40 @@
 :doc_list=>["main"],
 :docs=>{
-	"base"=> {
-    	:cmd=>[:save!],
-    	:tag=>["r","r-env","ruby","pandoc","texlive-full","ttm"],
-    	:filename_doc => "base/Dockerfile"
-	},
+    "dyndoc-docker" => {
+        :cmd=>[:save!],
+        :tag=>["dist-rocker-base","r-env","ruby","pandoc","texlive-full","ttm","dyndoc"],
+        :filename_doc => "main/Dockerfile"
+    },
+    "dyndocker-base" => {
+        :cmd=>[:save!],
+        :tag=>["dist-rocker-base","r-env","ruby","pandoc","texlive-full","ttm"],
+        :filename_doc => "../dyndocker-base/Dockerfile"
+    },
+    "dyndocker-main"=> {
+        :cmd=>[:save!],
+        :tag=>["dist-dyndocker-base","dyndoc"],
+        :filename_doc => "../dyndocker-main/Dockerfile"
+    },
+    "dyndocker-julia" => {
+        :cmd => [:save!],
+        :tag=>["dist-dyndocker-main","julia"],
+        :filename_doc => "../dyndocker-julia/Dockerfile"
+    }, #everything below is for archive
+    "base"=> {
+        :cmd=>[:save!],
+        :tag=>["r","r-env","ruby","pandoc","texlive-full","ttm"],
+        :filename_doc => "base/Dockerfile"
+    },
     "rocker"=> {
         :cmd=>[:save!],
         :tag=>["dist-rocker-base","r-env","ruby","pandoc","texlive-full","ttm"],
         :filename_doc => "base/Dockerfile"
     },
-	"main"=> {
-    	:cmd=>[:save!],
-    	:tag=>["dist-dyndoc-docker-base","dyndoc"],
-    	:filename_doc => "main/Dockerfile"
-	},
+    "main"=> {
+        :cmd=>[:save!],
+        :tag=>["dist-dyndoc-docker-base","dyndoc"],
+        :filename_doc => "main/Dockerfile"
+    },
     "julia" => {
         :cmd => [:save!],
         :tag=>["dist-dyndoc-docker-default","julia"],
