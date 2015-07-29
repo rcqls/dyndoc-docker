@@ -2,26 +2,27 @@
 :docs=>{
     "dyndoc-docker" => {
         :cmd=>[:save!],
-        :tag=>["dist-rocker-base","devtools","r-env","ruby","gem-bundle","pandoc","ttm","dyndoc"],
+        :tag=>["dist-rocker-base","devtools","r-env","ruby","pandoc","ttm","dyndoc"],
         :filename_doc => "main/Dockerfile"
     },
     "dyndocker-root" => {
         :cmd=>[:save!],
         :tag=>[
             "dist-rocker-base","devtools","r-env",
-            "ruby","gem-bundle",
+            "ruby",
             "pandoc",
             "ttm"
         ],
-        :filename_doc => "dockerfiles/root/Dockerfile"
+        :filename_doc => "../dyndocker-root/Dockerfile"
     },
     "dyndocker-R"=> {
         :cmd=>[:save!],
         :tag=>[
             "dist-dyndocker-root",
+            "gem-bundle",
             "dyndoc","dyndoc-server"
         ],
-        :filename_doc => "dockerfiles/R/Dockerfile"
+        :filename_doc => "../dyndocker/dockerfile/Dockerfile"
     },
     "dyndocker-jl" => {
         :cmd => [:save!],
@@ -30,7 +31,7 @@
             "dyndoc-server",
             "julia"
         ],
-        :filename_doc => "dockerfiles/julia/Dockerfile"
+        :filename_doc => "../dyndocker-julia/Dockerfile"
     },
     "dyndocker-base" => {
         :cmd=>[:save!],

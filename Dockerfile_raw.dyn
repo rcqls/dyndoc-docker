@@ -220,6 +220,7 @@ RUN gem install bundler \
 # don't create ".bundle" in all our apps
 ENV BUNDLE_APP_CONFIG $GEM_HOME
 [#??]gem-bundle[#>]## ruby:	#{dyndoc.library}/ruby
+ENV PATH #{dyndoc.library}/ruby/bin:$PATH
 ENV GEM_PATH #{dyndoc.library}/ruby:$GEM_HOME
 ## Last change for .gemrc to make "gem (un)install <package>" persistant  
 RUN echo "gem: --no-rdoc --no-ri -i #{dyndoc.library}/ruby" > ~/.gemrc
