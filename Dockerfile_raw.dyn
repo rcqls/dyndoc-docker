@@ -7,21 +7,21 @@ Rmk: latex is not installed by default since it can be installed in another cont
 [#=]locale[<<lang[en_US]<<enc[UTF-8]]
 [#=]R-version[3.2.1][#=]ruby-version[<<major[2.1]<<minor[5]]
 [#=]dyndoc[<<home[/dyndoc]<<library[/dyndoc-library]<<proj[/dyndoc-proj]]
-[#=]julia-version[<<major[0.3]<<minor[10]]
+[#=]julia-version[<<major[0.3]<<minor[11]]
 [#??]locale-fr[#=]locale[<<lang[fr_FR]<<enc[UTF-8]]
 [#??]testing[#=]distrib[<<name[debian]<<version[testing]]
 [#??]dist-rocker-base[#=]distrib[<<name[rocker/r-base]<<version[latest]]
-[#??]dist-dyndocker-base[#=]distrib[<<name[rcqls/dyndocker-base]<<version[latest]]
-[#??]dist-dyndocker-main[#=]distrib[<<name[rcqls/dyndocker-main]<<version[latest]]
+[#??]dist-dyndocker-root[#=]distrib[<<name[rcqls/dyndocker-root]<<version[latest]]
+[#??]dist-dyndocker-r[#=]distrib[<<name[rcqls/dyndocker]<<version[latest]]
+[#??]dist-dyndocker-base[#=]distrib[<<name[rcqls/dyndocker-base]<<version[root]]
+[#??]dist-dyndocker-main[#=]distrib[<<name[rcqls/dyndocker-base]<<version[main]]
 [#??]dist-dyndoc-docker-base[#=]distrib[<<name[rcqls/dyndoc-docker]<<version[base]]
 [#??]dist-dyndoc-docker-default[#=]distrib[<<name[rcqls/dyndoc-docker]<<version[latest]]
 [#??]end[#>]FROM #{distrib.name}:#{distrib.version}
 
 MAINTAINER "#{maintainer}"
 
-[#>]RUN apt-get update
-
-[#??]r[#>]## R Stuff (inspired from rocker/r-base)
+[#%]NO MORE USED!!!![#??]r[#>]## R Stuff (inspired from rocker/r-base)
 
 ## Set a default user. Available via runtime flag `--user docker` 
 ## Add user to 'staff' group, granting them write privileges to /usr/local/lib/R/site.library
@@ -70,17 +70,23 @@ RUN apt-get install -t unstable -y --no-install-recommends \
     && rm -rf /tmp/downloaded_packages/ /tmp/*.rds \
     && rm -rf /var/lib/apt/lists/*
 
+[#??]devtools[#>]
+## Install devtools R package and its dependencies
+RUN apt-get update \
+    && apt-get install -y libxml2-dev  libcurl4-openssl-dev libssl-dev \
+    && install.r devtools
+
 [#??]ruby[#>]## Ruby Stuff
 
-RUN apt-get install -y curl procps && rm -rf /var/lib/apt/lists/*
+RUN apt-get install -y curl procps \
+    && apt-get install -y git
 
 ENV RUBY_MAJOR #{ruby-version.major}
 ENV RUBY_VERSION #{ruby-version.major}.#{ruby-version.minor}
 
 # some of ruby's build scripts are written in ruby
 # we purge this later to make sure our final image uses what we just built
-RUN apt-get update \
-	&& apt-get install -y bison ruby ruby-dev
+RUN apt-get install -y bison ruby ruby-dev
 
 # skip installing gem documentation
 RUN echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc"
@@ -96,7 +102,7 @@ RUN gem install bundler \
 # don't create ".bundle" in all our apps
 ENV BUNDLE_APP_CONFIG $GEM_HOME
 
-[#??]texlive-full[#=]texlive[texlive2014nodoc][#>]## Latex texlive full without doc
+[#%]NO MORE USED![#??]texlive-full[#=]texlive[texlive2014nodoc][#>]## Latex texlive full without doc
 
 RUN mkdir /#{texlive}
 
@@ -104,8 +110,9 @@ WORKDIR /#{texlive}
 
 COPY full2014nodoc.profile /#{texlive}/
 
-RUN apt-get install -y wget tar perl fontconfig \
-     && wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz \
+RUN apt-get update \
+    && apt-get install -y wget tar perl fontconfig \
+    && wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz \
      && tar -xvf *.tar.gz 
 RUN cd install-tl-* \
     && ./install-tl --profile /#{texlive}/full2014nodoc.profile
@@ -139,8 +146,6 @@ RUN ./ttminstall
 RUN rm -fr /tmp/ttm
 
 [#??]dyndoc[#>]## Dyndoc
-
-RUN apt-get install -y git
 
 RUN gem install rake configliere ultraviolet
 
@@ -189,7 +194,8 @@ RUN ln -s #{dyndoc.home}/bin/dyndoc-compile.rb /usr/local/bin/dyn \
 	&& ln -s #{dyndoc.home}/bin/dyndoc-server-simple.rb /usr/local/bin/dyn-srv
 
 ## mountpoints are for
-RUN mkdir #{dyndoc.library}
+RUN mkdir -p #{dyndoc.library}
+
 VOLUME #{dyndoc.library}
 
 ## dyndoc: 	#{dyndoc.library}/dyndoc
@@ -203,10 +209,7 @@ RUN Rscript -e 'install.packages("base64")'
 [#??]r-env[#>]## R:		#{dyndoc.library}/R
 ENV R_LIBS_USER #{dyndoc.library}/R
 
-## Install devtools R package and its dependencies
-RUN apt-get install -y libxml2-dev  libcurl4-openssl-dev libssl-dev && install.r devtools
-
-[#??]gem-dyndoc[#>]
+[#%]NO MORE USED![#??]gem-dyndoc[#>]
 # install things globally, for great justice
 ENV GEM_HOME #{dyndoc.library}/ruby
 ENV PATH $GEM_HOME/bin:$PATH
@@ -229,13 +232,11 @@ WORKDIR /tmp/julia
 
 RUN wget https://julialang.s3.amazonaws.com/bin/linux/x64/#{julia-version.major}/julia-#{julia-version.major}.#{julia-version.minor}-linux-x86_64.tar.gz
 
-RUN tar xzvf julia-#{julia-version.major}.#{julia-version.minor}-linux-x86_64.tar.gz
-
-RUN mv "$(ls julia-*)" julia-#{julia-version.major}.#{julia-version.minor}
-
-RUN mv julia-#{julia-version.major}.#{julia-version.minor} /
-
-RUN rm -fr /tmp/julia
+RUN tar xzvf julia-#{julia-version.major}.#{julia-version.minor}-linux-x86_64.tar.gz \
+    && rm julia-#{julia-version.major}.#{julia-version.minor}-linux-x86_64.tar.gz \
+    && mv "$(ls -d julia-*)" julia-#{julia-version.major}.#{julia-version.minor} \
+    && mv julia-#{julia-version.major}.#{julia-version.minor} / \
+    && rm -fr /tmp/julia
 
 [#??]all[#>]
 
@@ -251,6 +252,7 @@ VOLUME #{dyndoc.proj}
 
 WORKDIR #{dyndoc.proj}
 
+[#??]dyndoc-server[#>][
 ## Port exposed by dyn-srv
 
 EXPOSE 7777
@@ -258,6 +260,8 @@ EXPOSE 7777
 ## the server to expose
 
 CMD ["/usr/local/bin/dyn-srv"]
+]
+[#??]all[#>]
 
 ## END
 
