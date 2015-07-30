@@ -11,7 +11,8 @@
             "dist-rocker-base","devtools","r-env",
             "ruby",
             "pandoc",
-            "ttm"
+            "ttm",
+            "clean"
         ],
         :filename_doc => "../dyndocker-root/Dockerfile"
     },

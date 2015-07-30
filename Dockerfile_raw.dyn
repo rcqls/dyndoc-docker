@@ -236,16 +236,27 @@ RUN wget https://julialang.s3.amazonaws.com/bin/linux/x64/#{julia-version.major}
 RUN tar xzvf julia-#{julia-version.major}.#{julia-version.minor}-linux-x86_64.tar.gz \
     && rm julia-#{julia-version.major}.#{julia-version.minor}-linux-x86_64.tar.gz \
     && mv "$(ls -d julia-*)" julia-#{julia-version.major}.#{julia-version.minor} \
-    && mv julia-#{julia-version.major}.#{julia-version.minor} / \
-    && rm -fr /tmp/julia
+    && mv julia-#{julia-version.major}.#{julia-version.minor} /
 
-[#??]all[#>]
+ENV JULIA_DIR /julia-#{julia-version.major}.#{julia-version.minor}
+
+RUN git clone https://github.com/rcqls/jl4rb.git 
+
+WORKDIR /tmp/julia/jl4rb
+
+RUN rake docker
+
+ENV PATH $PATH:/julia-#{julia-version.major}.#{julia-version.minor}/bin:
+
+RUN rm -fr /tmp/julia
+
+[#??]clean[#>]
 
 # cleanup package manager
 
 RUN apt-get autoclean && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-## the dyndoc projects folder
+[#??]all[#>]## the dyndoc projects folder
 
 RUN mkdir -p #{dyndoc.proj}
 
