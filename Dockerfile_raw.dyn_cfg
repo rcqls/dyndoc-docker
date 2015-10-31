@@ -2,7 +2,7 @@
 :docs=>{
     "dyndoc-docker" => {
         :cmd=>[:save!],
-        :tag=>["dist-rocker-base","devtools","r-env","ruby","pandoc","ttm","dyndoc"],
+        :tag=>["dist-rocker-base","devtools","r-env","ruby","pandoc","ttm","dyndoc","dyndoc-proj-dir","dyndoc-server-cmd","clean"],
         :filename_doc => "main/Dockerfile"
     },
     "dyndocker-root" => {
@@ -12,7 +12,7 @@
             "ruby",
             "pandoc",
             "ttm",
-            "clean"
+            "dyndoc-proj-dir","clean"
         ],
         :filename_doc => "../dyndocker-root/Dockerfile"
     },
@@ -21,7 +21,9 @@
         :tag=>[
             "dist-dyndocker-root",
             "gem-bundle",
-            "dyndoc","dyndoc-server"
+            "dyndoc",
+            "dyntask-install","dyntask-init-dyn","dyntask-server","dyndoc-dyntask-server-cmd",
+            "dyndoc-proj-dir"
         ],
         :filename_doc => "../dyndocker/dockerfile/Dockerfile"
     },
@@ -29,10 +31,29 @@
         :cmd => [:save!],
         :tag=>[
             "dist-dyndocker-r",
-            "dyndoc-server",
+            "dyndoc-proj-dir","dyndoc-dyntask-server-cmd",
             "julia"
         ],
         :filename_doc => "../dyndocker-julia/Dockerfile"
+    },
+    "dyndocker-pdflatex" => {
+        :cmd => [:save!],
+        :tag=>[
+            "dist-debian-testing",
+            "texlive-full",
+            "dyndoc-proj-dir","pdflatex-cmd","clean" 
+        ],
+        :filename_doc => "../dyndocker-pdflatex/Dockerfile"
+    },
+    "dyndocker-pdflatex-dyntask" => {
+        :cmd => [:save!],
+        :tag=>[
+            "dist-dyndocker-pdflatex",
+            "ruby4dyndocker-pdflatex",
+            "dyntask-install","dyntask-init-pdflatex",
+            "dyndoc-proj-dir","pdflatex-dyntask-cmd","clean" 
+        ],
+        :filename_doc => "../dyndocker-pdflatex/dyntask/Dockerfile"
     },
     "dyndocker-base" => {
         :cmd=>[:save!],

@@ -9,10 +9,12 @@ Rmk: latex is not installed by default since it can be installed in another cont
 [#=]dyndoc[<<home[/dyndoc]<<library[/dyndoc-library]<<proj[/dyndoc-proj]]
 [#=]julia-version[<<major[0.3]<<minor[11]]
 [#??]locale-fr[#=]locale[<<lang[fr_FR]<<enc[UTF-8]]
-[#??]testing[#=]distrib[<<name[debian]<<version[testing]]
+[#??]dist-debian-testing[#=]distrib[<<name[debian]<<version[testing]]
 [#??]dist-rocker-base[#=]distrib[<<name[rocker/r-base]<<version[latest]]
 [#??]dist-dyndocker-root[#=]distrib[<<name[rcqls/dyndocker-root]<<version[latest]]
 [#??]dist-dyndocker-r[#=]distrib[<<name[rcqls/dyndocker]<<version[latest]]
+[#??]dist-dyndocker-pdflatex[#=]distrib[<<name[rcqls/dyndocker-pdflatex]<<version[latest]]
+
 [#??]dist-dyndocker-base[#=]distrib[<<name[rcqls/dyndocker-base]<<version[root]]
 [#??]dist-dyndocker-main[#=]distrib[<<name[rcqls/dyndocker-base]<<version[main]]
 [#??]dist-dyndoc-docker-base[#=]distrib[<<name[rcqls/dyndoc-docker]<<version[base]]
@@ -102,7 +104,7 @@ RUN gem install bundler \
 # don't create ".bundle" in all our apps
 ENV BUNDLE_APP_CONFIG $GEM_HOME
 
-[#%]NO MORE USED![#??]texlive-full[#=]texlive[texlive2014nodoc][#>]## Latex texlive full without doc
+[#??]texlive-full[#=]texlive[texlive2014nodoc][#>]## Latex texlive full without doc
 
 RUN mkdir /#{texlive}
 
@@ -209,6 +211,47 @@ RUN Rscript -e 'install.packages("base64")'
 [#??]r-env[#>]## R:		#{dyndoc.library}/R
 ENV R_LIBS_USER #{dyndoc.library}/R
 
+[#??]ruby4dyndocker-pdflatex[#>]
+## Ruby Stuff only for dyndocker-pdflatex-dyntask install
+
+# some of ruby's build scripts are written in ruby
+# we purge this later to make sure our final image uses what we just built
+RUN apt-get update \
+    && apt-get install -y curl procps \
+    && apt-get install -y git \
+    && apt-get install -y ruby 
+
+# skip installing gem documentation
+RUN echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc"
+[#??]dyntask-install[#>]
+RUN gem install rake filewatcher
+
+RUN mkdir -p /tmp/dyntask
+
+WORKDIR /tmp/dyntask
+
+RUN git clone https://github.com/rcqls/dyntask-ruby.git 
+
+WORKDIR /tmp/dyntask/dyntask-ruby
+
+RUN rake docker
+
+RUN rm -fr /tmp/dyntask
+
+[#??]dyntask-init-dyn[#>]
+
+RUN dyntask-init default /dyndoc-proj:dyn,pandoc
+
+[#??]dyntask-init-pdflatex[#>]
+
+RUN dyntask-init default /dyndoc-proj:pdflatex
+
+[#??]dyntask-server[#>]
+
+RUN echo 'dyntask-server default'  >> $HOME/.profile
+
+
+
 [#%]NO MORE USED![#??]gem-dyndoc[#>]
 # install things globally, for great justice
 ENV GEM_HOME #{dyndoc.library}/ruby
@@ -246,7 +289,9 @@ WORKDIR /tmp/julia/jl4rb
 
 RUN rake docker
 
-ENV PATH $PATH:/julia-#{julia-version.major}.#{julia-version.minor}/bin:
+ENV PATH $PATH:/julia-#{julia-version.major}.#{julia-version.minor}/bin
+
+ENV JULIA_PKGDIR #{dyndoc.library}/julia
 
 RUN rm -fr /tmp/julia
 
@@ -256,7 +301,7 @@ RUN rm -fr /tmp/julia
 
 RUN apt-get autoclean && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-[#??]all[#>]## the dyndoc projects folder
+[#??]dyndoc-proj-dir[#>]## the dyndoc projects folder
 
 RUN mkdir -p #{dyndoc.proj}
 
@@ -264,7 +309,7 @@ VOLUME #{dyndoc.proj}
 
 WORKDIR #{dyndoc.proj}
 
-[#??]dyndoc-server[#>][
+[#??]dyndoc-server-cmd[#>][
 ## Port exposed by dyn-srv
 
 EXPOSE 7777
@@ -272,6 +317,33 @@ EXPOSE 7777
 ## the server to expose
 
 CMD ["/usr/local/bin/dyn-srv"]
+]
+
+[#??]dyndoc-dyntask-server-cmd[#>][
+## Port exposed by dyn-srv
+
+EXPOSE 7777
+
+## the server to expose
+RUN echo '#!/bin/bash' > /usr/local/bin/dyndoc_and_dyntask.sh
+
+RUN echo '/usr/local/bundle/bin/dyntask-server default&' >> /usr/local/bin/dyndoc_and_dyntask.sh
+
+RUN echo '/usr/local/bin/dyn-srv' >> /usr/local/bin/dyndoc_and_dyntask.sh
+
+CMD ["bash","/usr/local/bin/dyndoc_and_dyntask.sh"]
+]
+
+
+[#??]pdflatex-cmd[#>][
+## the pdflatex command
+
+CMD ["/usr/local/texlive/2014/bin/x86_64-linux/pdflatex"]
+]
+[#??]pdflatex-dyntask-cmd[#>][
+## the pdflatex command
+
+CMD ["/usr/local/bin/dyntask-server","default"]
 ]
 [#??]all[#>]
 
