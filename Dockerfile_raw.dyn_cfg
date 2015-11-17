@@ -21,7 +21,7 @@
         :tag=>[
             "dist-dyndocker-root",
             "gem-bundle",
-            "dyndoc",
+            "dyndoc","pandoc-update",
             "dyntask-install","dyntask-init-dyn","dyntask-server","dyndoc-dyntask-server-cmd",
             "dyndoc-proj-dir"
         ],
@@ -51,7 +51,7 @@
             "dist-dyndocker-pdflatex",
             "ruby4dyndocker-pdflatex",
             "dyntask-install","dyntask-init-pdflatex",
-            "dyndoc-proj-dir","pdflatex-dyntask-cmd","clean" 
+            "dyndoc-proj-dir","pdflatex-dyntask-cmd","update-locale","clean" 
         ],
         :filename_doc => "../dyndocker-pdflatex/dyntask/Dockerfile"
     },

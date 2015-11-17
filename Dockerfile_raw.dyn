@@ -127,6 +127,10 @@ ENV PATH $PATH:/usr/local/texlive/2014/bin/x86_64-linux
 
 RUN apt-get install -y pandoc
 
+[#??]pandoc-update[#>]## Pandoc
+
+RUN wget https://github.com/jgm/pandoc/releases/download/1.15.1/pandoc-1.15.1-1-amd64.deb && dpkg -i pandoc-1.15.1-1-amd64.deb
+
 [#??]ttm[#>]## Ttm 
 
 RUN mkdir -p /tmp/ttm
@@ -201,7 +205,8 @@ RUN rm -fr /tmp/dyndoc
 
 RUN ln -s #{dyndoc.home}/bin/dyndoc-compile.rb /usr/local/bin/dyn \
 	&& ln -s #{dyndoc.home}/bin/dyndoc-package.rb /usr/local/bin/dpm \
-	&& ln -s #{dyndoc.home}/bin/dyndoc-server-simple.rb /usr/local/bin/dyn-srv
+	&& ln -s #{dyndoc.home}/bin/dyndoc-server-simple.rb /usr/local/bin/dyn-srv \
+    && ln -s #{dyndoc.home}/bin/dyndoc-client-html.rb /usr/local/bin/dyn-cli
 
 ## mountpoints are for
 RUN mkdir -p #{dyndoc.library}
@@ -244,6 +249,8 @@ WORKDIR dyntask-ruby
 
 RUN rake docker
 
+RUN mkdir -p ~/.dyntask && cp -r share ~/.dyntask
+
 WORKDIR /tmp/dyntask
 
 RUN git clone https://github.com/rcqls/dyndoc-ruby-exec.git 
@@ -256,7 +263,9 @@ RUN rm -fr /tmp/dyntask
 
 [#??]dyntask-init-dyn[#>]
 
-RUN dyntask-init default /dyndoc-proj:dyn,pandoc
+RUN dyntask-init default /dyndoc-proj:dyn,pandoc,dyn_cli
+
+RUN dyntask-init pandoc-extra dir --force /dyndoc-library/pandoc-extra
 
 [#??]dyntask-init-pdflatex[#>]
 
@@ -310,6 +319,15 @@ ENV PATH $PATH:/julia-#{julia-version.major}.#{julia-version.minor}/bin
 ENV JULIA_PKGDIR #{dyndoc.library}/julia
 
 RUN rm -fr /tmp/julia
+
+[#??]update-locale[#>]
+RUN apt-get install -y locales
+
+RUN echo "#{locale.lang}.#{locale.enc} #{locale.enc}" >> /etc/locale.gen \
+&& locale-gen #{locale.lang}.:{#{=locale.enc}.downcase} \
+&& /usr/sbin/update-locale LANG=#{locale.lang}.#{locale.enc}
+ENV LC_ALL #{locale.lang}.#{locale.enc}
+ENV LANG #{locale.lang}.#{locale.enc}
 
 [#??]clean[#>]
 
